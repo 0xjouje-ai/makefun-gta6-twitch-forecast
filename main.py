@@ -22,9 +22,12 @@ So, for each case:
 1. Fit that regression on the comparables: log(peak ratio) ~ a + b*log(p1),
    where a comparable's peak ratio is its largest hourly viewers over hours
    2-24 divided by its hour-1 print. Predict the target's peak ratio from
-   its own hour-1 print, clamped to [1.75, 12] so a huge hour-1 print never
-   predicts a peak below the first hour, and a tiny one never predicts an
-   absurd explosion.
+   its own hour-1 print, clamped to [1.25, 12]: the floor is 1.25, not 1.75,
+   because the biggest comparable launches barely grow past hour 1 at all
+   (the two largest hour-1 prints peak at 0.95x and 1.26x it), so a 1.75
+   floor would force a 75% rise the data does not support onto exactly the
+   huge launches this model will forecast; a tiny hour-1 print still never
+   predicts an absurd explosion.
 2. Take every comparable's launch-day log-ratio curve, log(v_h / v_1), and
    rescale it so that curve's own peak equals the predicted peak. This keeps
    each launch's shape (where its jump lands, how fast it decays) while
@@ -59,7 +62,15 @@ Z = [-1.6448536269514722, -0.6744897501960817, 0.0, 0.6744897501960817, 1.644853
 # Fixed log spread around the median forecast (see the module docstring).
 SPREAD = 0.45
 # Sane bounds for the predicted peak ratio (peak viewers / hour-1 print).
-PEAK_MIN = 1.75
+# PEAK_MIN is 1.25, not 1.75: 14 of the 38 comparables peak below 1.75x
+# their hour-1 print, and the two largest peak at 0.95x and 1.26x it, so a
+# 1.75 floor inflates exactly the huge launches this model forecasts (the
+# largest practice case's regression predicts 0.998 and was forced to 1.75).
+# 1.25 keeps the forecast's shape instead of collapsing it (a 1.0 floor
+# would zero every rescaled log-ratio and flatten the whole day), while
+# leave-one-out scoring on the big launches (hour-1 print >= 10k) improves
+# from 0.3092 to 0.3002 mean pinball loss.
+PEAK_MIN = 1.25
 PEAK_MAX = 12.0
 # A comparable must have its hour-1 print and at least this many of the 24
 # release-day hours to count.
